@@ -4,18 +4,18 @@ import Spinner from '@/components/ui/Spinner'
 
 export default function RunAnalysisCard({
   resumeLabel,
-  jdLabel,
-  canRun,
-  running,
-  error,
-  onRun,
+  jobDescriptionLabel,
+  canRunAnalysis,
+  isRunning,
+  errorMessage,
+  onRunAnalysis,
 }: {
   resumeLabel: string
-  jdLabel: string
-  canRun: boolean
-  running: boolean
-  error: string | null
-  onRun: () => void
+  jobDescriptionLabel: string
+  canRunAnalysis: boolean
+  isRunning: boolean
+  errorMessage: string | null
+  onRunAnalysis: () => void
 }) {
   return (
     <Card className="p-4">
@@ -24,16 +24,16 @@ export default function RunAnalysisCard({
           <div className="text-sm font-semibold">Run ATS Score</div>
           <div className="text-xs text-[#A8B3CF]">Extract text → score → recommendations</div>
         </div>
-        <Button onClick={onRun} disabled={!canRun || running}>
-          {running ? 'Running…' : 'Run'}
+        <Button onClick={onRunAnalysis} disabled={!canRunAnalysis || isRunning}>
+          {isRunning ? 'Running…' : 'Run'}
         </Button>
       </div>
       <div className="mt-3 text-sm text-[#A8B3CF]">
         Resume: <span className="text-white">{resumeLabel}</span>
-        {' • '}JD: <span className="text-white">{jdLabel}</span>
+        {' • '}JD: <span className="text-white">{jobDescriptionLabel}</span>
       </div>
-      {running ? <div className="mt-3"><Spinner label="Processing resume" /></div> : null}
-      {error ? <div className="mt-3 text-sm text-rose-300">{error}</div> : null}
+      {isRunning ? <div className="mt-3"><Spinner label="Processing resume" /></div> : null}
+      {errorMessage ? <div className="mt-3 text-sm text-rose-300">{errorMessage}</div> : null}
     </Card>
   )
 }

@@ -44,11 +44,11 @@ router.get('/', requireAuth, async (req: Request, res: Response) => {
   const items = await JobDescription.find({ userId: req.userId }).sort({ updatedAt: -1 }).lean()
   res.json({
     success: true,
-    jobDescriptions: items.map((j) => ({
-      id: j._id.toString(),
-      title: j.title,
-      updatedAt: j.updatedAt,
-      createdAt: j.createdAt,
+    jobDescriptions: items.map((jobDescriptionItem) => ({
+      id: jobDescriptionItem._id.toString(),
+      title: jobDescriptionItem.title,
+      updatedAt: jobDescriptionItem.updatedAt,
+      createdAt: jobDescriptionItem.createdAt,
     })),
   })
 })

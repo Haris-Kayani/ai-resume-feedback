@@ -10,19 +10,19 @@ export type DiffResult = {
 }
 
 export default function DiffCard({
-  compareId,
-  onCompareId,
+  compareRunId,
+  onCompareRunIdChange,
   compareOptions,
-  loading,
-  diff,
-  onCompute,
+  isLoading,
+  diffResult,
+  onComputeDiff,
 }: {
-  compareId: string
-  onCompareId: (id: string) => void
+  compareRunId: string
+  onCompareRunIdChange: (id: string) => void
   compareOptions: Array<{ id: string; overallScore: number }>
-  loading: boolean
-  diff: DiffResult | null
-  onCompute: () => void
+  isLoading: boolean
+  diffResult: DiffResult | null
+  onComputeDiff: () => void
 }) {
   return (
     <Card className="p-4">
@@ -34,27 +34,27 @@ export default function DiffCard({
         <div className="flex items-center gap-2">
           <select
             className="h-10 rounded-[10px] bg-[#111A2E] border border-[#273357] px-3 text-sm"
-            value={compareId}
-            onChange={(e) => onCompareId(e.target.value)}
+            value={compareRunId}
+            onChange={(e) => onCompareRunIdChange(e.target.value)}
           >
             <option value="">Select run to compare</option>
-            {compareOptions.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.id.slice(0, 8)}… • score {r.overallScore}
+            {compareOptions.map((run) => (
+              <option key={run.id} value={run.id}>
+                {run.id.slice(0, 8)}… • score {run.overallScore}
               </option>
             ))}
           </select>
-          <Button variant="secondary" onClick={onCompute} disabled={!compareId || loading}>
+          <Button variant="secondary" onClick={onComputeDiff} disabled={!compareRunId || isLoading}>
             Compute
           </Button>
         </div>
       </div>
 
-      {diff ? (
+      {diffResult ? (
         <div className="mt-3">
-          <div className="text-xs text-[#A8B3CF]">Score delta: {diff.scoreDelta >= 0 ? `+${diff.scoreDelta}` : diff.scoreDelta}</div>
+          <div className="text-xs text-[#A8B3CF]">Score delta: {diffResult.scoreDelta >= 0 ? `+${diffResult.scoreDelta}` : diffResult.scoreDelta}</div>
           <pre className="mt-2 max-h-[420px] overflow-auto rounded-lg border border-[#273357] bg-[#0B1220] p-3 text-xs leading-5">
-            {diff.unifiedDiff}
+            {diffResult.unifiedDiff}
           </pre>
         </div>
       ) : (

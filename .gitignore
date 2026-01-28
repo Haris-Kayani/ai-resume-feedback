@@ -112,3 +112,4 @@ Dockerfile
 DOCUMENTATION.md
 docker-compose.yml
 .env
+src/lib/toast.test.ts

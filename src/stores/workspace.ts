@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { apiDelete, apiGet, apiPost, apiPut, apiUpload } from '@/utils/api'
+import { toastService } from '@/lib/toast'
 
 export type Resume = {
   id: string
@@ -66,15 +67,15 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   refreshAll: async () => {
     set({ loading: true, error: null })
     try {
-      const [resumes, jds, runs] = await Promise.all([
+      const [resumesResponse, jobDescriptionsResponse, analysisRunsResponse] = await Promise.all([
         apiGet<{ success: true; resumes: Resume[] }>('/api/resumes'),
         apiGet<{ success: true; jobDescriptions: JobDescription[] }>('/api/job-descriptions'),
         apiGet<{ success: true; runs: AnalysisRunListItem[] }>('/api/analysis/runs'),
       ])
       set({
-        resumes: resumes.resumes,
-        jobDescriptions: jds.jobDescriptions,
-        runs: runs.runs,
+        resumes: resumesResponse.resumes,
+        jobDescriptions: jobDescriptionsResponse.jobDescriptions,
+        runs: analysisRunsResponse.runs,
         loading: false,
       })
     } catch (e: unknown) {
@@ -84,32 +85,66 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   uploadResume: async (file) => {
     const fd = new FormData()
     fd.append('file', file)
-    await apiUpload<{ success: true }>('/api/resumes/upload', fd)
-    await get().refreshAll()
+    try {
+      await apiUpload<{ success: true }>('/api/resumes/upload', fd)
+      await get().refreshAll()
+      toastService.resumeUploadSuccess(file.name)
+    } catch (e: unknown) {
+      const errorMessage = getErrorMessage(e, 'Failed to upload resume')
+      toastService.resumeUploadFailure(errorMessage)
+      throw e
+    }
   },
   deleteResume: async (resumeId) => {
-    await apiDelete<{ success: true }>(`/api/resumes/${resumeId}`)
-    const state = get()
-    if (state.activeResumeId === resumeId) set({ activeResumeId: null })
-    await get().refreshAll()
+    try {
+      await apiDelete<{ success: true }>(`/api/resumes/${resumeId}`)
+      const state = get()
+      if (state.activeResumeId === resumeId) set({ activeResumeId: null })
+      await get().refreshAll()
+      toastService.resumeDeleteSuccess()
+    } catch (e: unknown) {
+      const errorMessage = getErrorMessage(e, 'Failed to delete resume')
+      toastService.resumeDeleteFailure(errorMessage)
+      throw e
+    }
   },
   loadJobDescription: async (id) => {
     const res = await apiGet<{ success: true; jobDescription: JobDescription }>(`/api/job-descriptions/${id}`)
     return res.jobDescription
   },
   createJobDescription: async (payload) => {
-    const res = await apiPost<{ success: true; jobDescription: { id: string } }>('/api/job-descriptions', payload)
-    await get().refreshAll()
-    return res.jobDescription.id
+    try {
+      const res = await apiPost<{ success: true; jobDescription: { id: string } }>('/api/job-descriptions', payload)
+      await get().refreshAll()
+      toastService.jobDescriptionCreated()
+      return res.jobDescription.id
+    } catch (e: unknown) {
+      const errorMessage = getErrorMessage(e, 'Failed to create job description')
+      toastService.jobDescriptionFailure(errorMessage)
+      throw e
+    }
   },
   updateJobDescription: async (id, payload) => {
-    await apiPut<{ success: true }>(`/api/job-descriptions/${id}`, payload)
-    await get().refreshAll()
+    try {
+      await apiPut<{ success: true }>(`/api/job-descriptions/${id}`, payload)
+      await get().refreshAll()
+    } catch (e: unknown) {
+      const errorMessage = getErrorMessage(e, 'Failed to save job description')
+      toastService.jobDescriptionFailure(errorMessage)
+      throw e
+    }
   },
   runAnalysis: async (resumeId, jobDescriptionId) => {
-    const res = await apiPost<{ success: true; runId: string }>('/api/analysis/run', { resumeId, jobDescriptionId })
-    await get().refreshAll()
-    return res.runId
+    try {
+      const res = await apiPost<{ success: true; runId: string }>('/api/analysis/run', { resumeId, jobDescriptionId })
+      await get().refreshAll()
+      toastService.analysisSuccess()
+      return res.runId
+    } catch (e: unknown) {
+      const errorMessage = getErrorMessage(e, 'Failed to run analysis')
+      toastService.analysisFailure(errorMessage)
+      throw e
+    }
   },
   setActiveResumeId: (id) => set({ activeResumeId: id }),
   setActiveJobDescriptionId: (id) => set({ activeJobDescriptionId: id }),

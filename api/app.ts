@@ -24,7 +24,7 @@ const app: express.Application = express()
 
 const allowedOrigins = (process.env.CLIENT_ORIGIN || 'http://localhost:5173,http://localhost:3001')
   .split(',')
-  .map((s) => s.trim())
+  .map((origin) => origin.trim())
   .filter(Boolean)
 
 app.use(

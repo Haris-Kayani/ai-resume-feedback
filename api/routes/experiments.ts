@@ -31,7 +31,7 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
     return
   }
 
-  const exp = await Experiment.create({
+  const experiment = await Experiment.create({
     userId: req.userId,
     jobDescriptionId: parsed.data.jobDescriptionId,
     name: parsed.data.name,
@@ -43,14 +43,14 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
     b: { runId: runB._id.toString(), overallScore: runB.overallScore, metrics: runB.metrics },
   }
 
-  const expRun = await ExperimentRun.create({
-    experimentId: exp._id.toString(),
+  const experimentRun = await ExperimentRun.create({
+    experimentId: experiment._id.toString(),
     runAId: runA._id.toString(),
     runBId: runB._id.toString(),
     comparison,
   })
 
-  res.json({ success: true, experimentId: exp._id.toString(), experimentRunId: expRun._id.toString(), comparison })
+  res.json({ success: true, experimentId: experiment._id.toString(), experimentRunId: experimentRun._id.toString(), comparison })
 })
 
 export default router

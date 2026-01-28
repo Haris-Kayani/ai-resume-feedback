@@ -54,13 +54,13 @@ const upload = multer({
 
 router.get('/', requireAuth, async (req: Request, res: Response) => {
   const items = await Resume.find({ userId: req.userId }).sort({ createdAt: -1 }).lean()
-  res.json({ success: true, resumes: items.map((r) => ({
-    id: r._id.toString(),
-    displayName: r.displayName,
-    fileType: r.fileType,
-    sizeBytes: r.sizeBytes,
-    createdAt: r.createdAt,
-    extractedAt: r.extractedAt,
+  res.json({ success: true, resumes: items.map((resumeItem) => ({
+    id: resumeItem._id.toString(),
+    displayName: resumeItem.displayName,
+    fileType: resumeItem.fileType,
+    sizeBytes: resumeItem.sizeBytes,
+    createdAt: resumeItem.createdAt,
+    extractedAt: resumeItem.extractedAt,
   })) })
 })
 

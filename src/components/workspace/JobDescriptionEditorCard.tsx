@@ -5,15 +5,15 @@ import RichTextEditor from '@/components/RichTextEditor'
 export default function JobDescriptionEditorCard({
   activeJobDescriptionId,
   title,
-  onTitleChange,
+  onJobTitleChange,
   html,
-  onEditorChange,
+  onContentChange,
 }: {
   activeJobDescriptionId: string | null
   title: string
-  onTitleChange: (v: string) => void
+  onJobTitleChange: (value: string) => void
   html: string
-  onEditorChange: (next: { html: string; text: string }) => void
+  onContentChange: (next: { html: string; text: string }) => void
 }) {
   return (
     <Card className="p-4">
@@ -21,11 +21,11 @@ export default function JobDescriptionEditorCard({
         <div className="space-y-3">
           <Input 
             value={title} 
-            onChange={(e) => onTitleChange(e.target.value)} 
+            onChange={(e) => onJobTitleChange(e.target.value)} 
             placeholder="Role title (e.g. Senior Frontend Engineer)"
             className="text-base font-medium"
           />
-          <RichTextEditor valueHtml={html} onChange={onEditorChange} placeholder="Paste the job description here…" />
+          <RichTextEditor valueHtml={html} onChange={onContentChange} placeholder="Paste the job description here…" />
         </div>
       ) : (
         <div className="flex items-center justify-center py-12 text-sm text-white/40">

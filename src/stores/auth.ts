@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { apiGet, apiPost } from '@/utils/api'
+import { toastService } from '@/lib/toast'
 
 export type User = {
   id: string
@@ -42,9 +43,11 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const res = await apiPost<{ success: true; user: User }>('/api/auth/login', { email, password })
       set({ user: res.user, loading: false })
+      toastService.loginSuccess(res.user.email)
     } catch (e: unknown) {
-      const msg = getErrorMessage(e, 'Login failed')
-      set({ error: msg, loading: false })
+      const errorMessage = getErrorMessage(e, 'Login failed')
+      set({ error: errorMessage, loading: false })
+      toastService.loginFailure(errorMessage)
       throw e
     }
   },
@@ -53,9 +56,11 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       const res = await apiPost<{ success: true; user: User }>('/api/auth/register', { email, password })
       set({ user: res.user, loading: false })
+      toastService.registerSuccess(res.user.email)
     } catch (e: unknown) {
-      const msg = getErrorMessage(e, 'Registration failed')
-      set({ error: msg, loading: false })
+      const errorMessage = getErrorMessage(e, 'Registration failed')
+      set({ error: errorMessage, loading: false })
+      toastService.registerFailure(errorMessage)
       throw e
     }
   },
@@ -64,6 +69,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       await apiPost<{ success: true }>('/api/auth/logout')
       set({ user: null, loading: false })
+      toastService.logoutSuccess()
     } catch {
       set({ user: null, loading: false })
     }

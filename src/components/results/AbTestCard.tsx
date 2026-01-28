@@ -3,26 +3,26 @@ import Button from '@/components/ui/Button'
 
 export default function AbTestCard({
   experimentName,
-  onExperimentName,
-  compareId,
-  onCompareId,
+  onExperimentNameChange,
+  compareRunId,
+  onCompareRunIdChange,
   compareOptions,
-  loading,
-  abResult,
-  onRun,
+  isLoading,
+  abTestResult,
+  onRunExperiment,
 }: {
   experimentName: string
-  onExperimentName: (v: string) => void
-  compareId: string
-  onCompareId: (id: string) => void
+  onExperimentNameChange: (value: string) => void
+  compareRunId: string
+  onCompareRunIdChange: (id: string) => void
   compareOptions: Array<{ id: string; overallScore: number }>
-  loading: boolean
-  abResult: {
+  isLoading: boolean
+  abTestResult: {
     scoreDelta: number
     a: { runId: string; overallScore: number; metrics: Record<string, number> }
     b: { runId: string; overallScore: number; metrics: Record<string, number> }
   } | null
-  onRun: () => void
+  onRunExperiment: () => void
 }) {
   return (
     <Card className="p-4">
@@ -35,38 +35,38 @@ export default function AbTestCard({
           <input
             className="h-10 w-[160px] rounded-[10px] bg-[#111A2E] border border-[#273357] px-3 text-sm"
             value={experimentName}
-            onChange={(e) => onExperimentName(e.target.value)}
+            onChange={(e) => onExperimentNameChange(e.target.value)}
           />
           <select
             className="h-10 rounded-[10px] bg-[#111A2E] border border-[#273357] px-3 text-sm"
-            value={compareId}
-            onChange={(e) => onCompareId(e.target.value)}
+            value={compareRunId}
+            onChange={(e) => onCompareRunIdChange(e.target.value)}
           >
             <option value="">Select variant run (B)</option>
-            {compareOptions.map((r) => (
-              <option key={r.id} value={r.id}>
-                {r.id.slice(0, 8)}… • score {r.overallScore}
+            {compareOptions.map((run) => (
+              <option key={run.id} value={run.id}>
+                {run.id.slice(0, 8)}… • score {run.overallScore}
               </option>
             ))}
           </select>
-          <Button onClick={onRun} disabled={!compareId || loading}>
+          <Button onClick={onRunExperiment} disabled={!compareRunId || isLoading}>
             Run
           </Button>
         </div>
       </div>
 
-      {abResult ? (
+      {abTestResult ? (
         <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
           <div className="rounded-lg border border-[#273357] bg-[#111A2E] p-3">
             <div className="text-xs text-[#A8B3CF]">Variant A</div>
-            <div className="text-lg font-semibold">{abResult.a.overallScore}</div>
+            <div className="text-lg font-semibold">{abTestResult.a.overallScore}</div>
           </div>
           <div className="rounded-lg border border-[#273357] bg-[#111A2E] p-3">
             <div className="text-xs text-[#A8B3CF]">Variant B</div>
-            <div className="text-lg font-semibold">{abResult.b.overallScore}</div>
+            <div className="text-lg font-semibold">{abTestResult.b.overallScore}</div>
           </div>
           <div className="md:col-span-2 text-sm text-[#A8B3CF]">
-            Score delta (B − A): {abResult.scoreDelta >= 0 ? `+${abResult.scoreDelta}` : abResult.scoreDelta}
+            Score delta (B − A): {abTestResult.scoreDelta >= 0 ? `+${abTestResult.scoreDelta}` : abTestResult.scoreDelta}
           </div>
         </div>
       ) : (

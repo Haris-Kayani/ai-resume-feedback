@@ -83,7 +83,7 @@ const STOPWORDS = new Set(
     'under',
     'between',
     'within',
-  ].map((s) => s.toLowerCase()),
+  ].map((stopword) => stopword.toLowerCase()),
 )
 
 const SKILL_PATTERNS: Array<{ label: string; re: RegExp }> = [
@@ -123,23 +123,23 @@ function tokenizeWords(input: string): string[] {
   return normalize(input)
     .toLowerCase()
     .split(/\s+/)
-    .map((w) => w.trim())
-    .filter((w) => w.length >= 3)
-    .filter((w) => !STOPWORDS.has(w))
+    .map((word) => word.trim())
+    .filter((word) => word.length >= 3)
+    .filter((word) => !STOPWORDS.has(word))
 }
 
 function extractTopKeywords(jdText: string, limit: number): string[] {
   const words = tokenizeWords(jdText)
   const counts = new Map<string, number>()
-  for (const w of words) counts.set(w, (counts.get(w) || 0) + 1)
+  for (const word of words) counts.set(word, (counts.get(word) || 0) + 1)
   return [...counts.entries()]
     .sort((a, b) => b[1] - a[1])
     .slice(0, limit)
-    .map(([w]) => w)
+    .map(([keyword]) => keyword)
 }
 
 function sectionScore(resumeText: string): { score: number; missing: string[] } {
-  const t = resumeText.toLowerCase()
+  const normalizedText = resumeText.toLowerCase()
   const sections = [
     { key: 'summary', re: /\b(summary|profile|objective)\b/i },
     { key: 'experience', re: /\b(experience|employment|work history)\b/i },
@@ -148,9 +148,9 @@ function sectionScore(resumeText: string): { score: number; missing: string[] } 
   ]
   let score = 0
   const missing: string[] = []
-  for (const s of sections) {
-    if (s.re.test(t)) score += 20
-    else missing.push(s.key)
+  for (const section of sections) {
+    if (section.re.test(normalizedText)) score += 20
+    else missing.push(section.key)
   }
   return { score, missing }
 }
@@ -187,12 +187,12 @@ function lengthScore(resumeText: string): { score: number; bucket: 'low' | 'ok' 
 }
 
 function skillCoverage(jdText: string, resumeText: string): { jdSkills: string[]; matched: string[]; missing: string[] } {
-  const jdSkills = SKILL_PATTERNS.filter((s) => s.re.test(jdText)).map((s) => s.label)
+  const jdSkills = SKILL_PATTERNS.filter((skillPattern) => skillPattern.re.test(jdText)).map((skillPattern) => skillPattern.label)
   const matched = jdSkills.filter((label) => {
-    const p = SKILL_PATTERNS.find((s) => s.label === label)
-    return p ? p.re.test(resumeText) : false
+    const pattern = SKILL_PATTERNS.find((skillPattern) => skillPattern.label === label)
+    return pattern ? pattern.re.test(resumeText) : false
   })
-  const missing = jdSkills.filter((s) => !matched.includes(s))
+  const missing = jdSkills.filter((skill) => !matched.includes(skill))
   return { jdSkills, matched, missing }
 }
 

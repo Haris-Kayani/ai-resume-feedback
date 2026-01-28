@@ -65,8 +65,8 @@ router.post('/login', async (req: Request, res: Response) => {
     return
   }
 
-  const ok = await bcrypt.compare(password, user.passwordHash)
-  if (!ok) {
+  const isPasswordValid = await bcrypt.compare(password, user.passwordHash)
+  if (!isPasswordValid) {
     res.status(401).json({ success: false, error: 'Invalid credentials' })
     return
   }

@@ -62,8 +62,8 @@ try {
   })
 
   await waitForHealthy(healthURL, 60_000)
-  const extraProjects = (process.env.PLAYWRIGHT_PROJECTS || '').split(',').map((s) => s.trim()).filter(Boolean)
-  const projectArgs = extraProjects.flatMap((p) => ['--project', p])
+  const extraProjects = (process.env.PLAYWRIGHT_PROJECTS || '').split(',').map((project) => project.trim()).filter(Boolean)
+  const projectArgs = extraProjects.flatMap((project) => ['--project', project])
   const workers = process.env.PLAYWRIGHT_WORKERS || '2'
   const pw = spawnLogged('npx', ['playwright', 'test', '--workers', workers, ...projectArgs], { ...process.env, E2E_BASE_URL: baseURL })
   const code = await new Promise((resolve) => pw.on('close', resolve))

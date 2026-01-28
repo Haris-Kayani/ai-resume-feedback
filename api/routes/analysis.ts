@@ -18,13 +18,13 @@ router.get('/runs', requireAuth, async (req: Request, res: Response) => {
   const runs = await AnalysisRun.find({ userId: req.userId }).sort({ createdAt: -1 }).limit(50).lean()
   res.json({
     success: true,
-    runs: runs.map((r) => ({
-      id: r._id.toString(),
-      resumeId: r.resumeId,
-      jobDescriptionId: r.jobDescriptionId,
-      overallScore: r.overallScore,
-      metrics: r.metrics,
-      createdAt: r.createdAt,
+    runs: runs.map((analysisRunItem) => ({
+      id: analysisRunItem._id.toString(),
+      resumeId: analysisRunItem.resumeId,
+      jobDescriptionId: analysisRunItem.jobDescriptionId,
+      overallScore: analysisRunItem.overallScore,
+      metrics: analysisRunItem.metrics,
+      createdAt: analysisRunItem.createdAt,
     })),
   })
 })

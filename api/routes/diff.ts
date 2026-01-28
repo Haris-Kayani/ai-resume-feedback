@@ -39,8 +39,8 @@ router.post('/', requireAuth, async (req: Request, res: Response) => {
   const metricDeltas: Record<string, number> = {}
   const baseMetrics = base.metrics as unknown as Record<string, number>
   const compareMetrics = compare.metrics as unknown as Record<string, number>
-  for (const k of Object.keys(baseMetrics)) {
-    metricDeltas[k] = (compareMetrics[k] || 0) - (baseMetrics[k] || 0)
+  for (const metricKey of Object.keys(baseMetrics)) {
+    metricDeltas[metricKey] = (compareMetrics[metricKey] || 0) - (baseMetrics[metricKey] || 0)
   }
 
   res.json({

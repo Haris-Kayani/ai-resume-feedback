@@ -155,9 +155,9 @@ export default function Workspace() {
               resumes={resumes}
               activeResumeId={activeResumeId}
               isUploading={isUploading}
-              onUpload={(file) => void handleUploadResume(file)}
-              onSelect={(resumeId) => setActiveResumeId(resumeId)}
-              onDelete={(resumeId) => void deleteResume(resumeId)}
+              onFileUpload={(file) => void handleUploadResume(file)}
+              onResumeSelect={(resumeId) => setActiveResumeId(resumeId)}
+              onResumeDelete={(resumeId) => void deleteResume(resumeId)}
             />
           </section>
 
@@ -199,9 +199,9 @@ export default function Workspace() {
             <JobDescriptionEditorCard
               activeJobDescriptionId={activeJobDescriptionId}
               title={jobDescriptionTitle}
-              onTitleChange={setJobDescriptionTitle}
+              onJobTitleChange={setJobDescriptionTitle}
               html={jobDescriptionHtml}
-              onEditorChange={(editorContent) => {
+              onContentChange={(editorContent) => {
                 setJobDescriptionHtml(editorContent.html)
                 setJobDescriptionText(editorContent.text)
               }}

@@ -6,16 +6,16 @@ export default function ResumesCard({
   resumes,
   activeResumeId,
   isUploading,
-  onUpload,
-  onSelect,
-  onDelete,
+  onFileUpload,
+  onResumeSelect,
+  onResumeDelete,
 }: {
   resumes: Resume[]
   activeResumeId: string | null
   isUploading: boolean
-  onUpload: (file: File) => void
-  onSelect: (resumeId: string) => void
-  onDelete: (resumeId: string) => void
+  onFileUpload: (file: File) => void
+  onResumeSelect: (resumeId: string) => void
+  onResumeDelete: (resumeId: string) => void
 }) {
   return (
     <Card className="p-4">
@@ -28,7 +28,7 @@ export default function ResumesCard({
             className="hidden"
             onChange={(e) => {
               const selectedFile = e.target.files?.[0]
-              if (selectedFile) onUpload(selectedFile)
+              if (selectedFile) onFileUpload(selectedFile)
               e.currentTarget.value = ''
             }}
           />
@@ -51,7 +51,7 @@ export default function ResumesCard({
                   ? 'border-indigo-500/50 bg-indigo-500/10' 
                   : 'border-white/10 hover:bg-white/5'
               }`}
-              onClick={() => onSelect(resume.id)}
+              onClick={() => onResumeSelect(resume.id)}
             >
               <div className="flex items-center justify-between gap-2">
                 <div className="text-sm font-medium text-white truncate flex-1">{resume.displayName}</div>
@@ -64,7 +64,7 @@ export default function ResumesCard({
                   className="text-xs text-rose-400 hover:text-rose-300 transition-colors"
                   onClick={(e) => {
                     e.stopPropagation()
-                    onDelete(resume.id)
+                    onResumeDelete(resume.id)
                   }}
                 >
                   Remove

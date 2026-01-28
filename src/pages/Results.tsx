@@ -49,16 +49,16 @@ export default function Results() {
   const { runId } = useParams()
   const nav = useNavigate()
   const { runs, refreshAll } = useWorkspaceStore()
-  const [tab, setTab] = useState<ResultsTab>('overview')
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [run, setRun] = useState<Run | null>(null)
-  const [compareId, setCompareId] = useState<string>('')
-  const [diff, setDiff] = useState<DiffResult | null>(null)
+  const [activeTab, setActiveTab] = useState<ResultsTab>('overview')
+  const [isLoading, setIsLoading] = useState(false)
+  const [errorMessage, setErrorMessage] = useState<string | null>(null)
+  const [analysisRun, setAnalysisRun] = useState<Run | null>(null)
+  const [compareRunId, setCompareRunId] = useState<string>('')
+  const [diffResult, setDiffResult] = useState<DiffResult | null>(null)
   const [experimentName, setExperimentName] = useState('Experiment')
-  const [abResult, setAbResult] = useState<AbComparison | null>(null)
+  const [abTestResult, setAbTestResult] = useState<AbComparison | null>(null)
 
-  const compareOptions = useMemo(() => runs.filter((r) => r.id !== runId), [runs, runId])
+  const compareOptions = useMemo(() => runs.filter((analysisRunItem) => analysisRunItem.id !== runId), [runs, runId])
 
   useEffect(() => {
     void refreshAll()
@@ -67,57 +67,57 @@ export default function Results() {
   useEffect(() => {
     if (!runId) return
     void (async () => {
-      setLoading(true)
-      setError(null)
+      setIsLoading(true)
+      setErrorMessage(null)
       try {
         const res = await apiGet<{ success: true; run: Run }>(`/api/analysis/runs/${runId}`)
-        setRun(res.run)
+        setAnalysisRun(res.run)
       } catch (e: unknown) {
-        setError(getErrorMessage(e, 'Failed to load run'))
+        setErrorMessage(getErrorMessage(e, 'Failed to load run'))
       } finally {
-        setLoading(false)
+        setIsLoading(false)
       }
     })()
   }, [runId])
 
   async function loadDiff() {
-    if (!runId || !compareId) return
-    setLoading(true)
-    setError(null)
+    if (!runId || !compareRunId) return
+    setIsLoading(true)
+    setErrorMessage(null)
     try {
-      const res = await apiPost<{ success: true; diff: DiffResult }>('/api/diff', { baseRunId: runId, compareRunId: compareId })
-      setDiff(res.diff)
+      const res = await apiPost<{ success: true; diff: DiffResult }>('/api/diff', { baseRunId: runId, compareRunId: compareRunId })
+      setDiffResult(res.diff)
     } catch (e: unknown) {
-      setError(getErrorMessage(e, 'Failed to compute diff'))
+      setErrorMessage(getErrorMessage(e, 'Failed to compute diff'))
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }
 
-  async function runAb() {
-    if (!runId || !compareId || !run) return
-    setLoading(true)
-    setError(null)
+  async function runAbTest() {
+    if (!runId || !compareRunId || !analysisRun) return
+    setIsLoading(true)
+    setErrorMessage(null)
     try {
       const res = await apiPost<{ success: true; comparison: AbComparison }>('/api/experiments', {
         name: experimentName,
-        jobDescriptionId: run.jobDescriptionId,
+        jobDescriptionId: analysisRun.jobDescriptionId,
         runAId: runId,
-        runBId: compareId,
+        runBId: compareRunId,
       })
-      setAbResult(res.comparison)
+      setAbTestResult(res.comparison)
     } catch (e: unknown) {
-      setError(getErrorMessage(e, 'Failed to run A/B'))
+      setErrorMessage(getErrorMessage(e, 'Failed to run A/B'))
     } finally {
-      setLoading(false)
+      setIsLoading(false)
     }
   }
 
-  const recs = useMemo(() => {
-    if (!run) return []
+  const sortedRecommendations = useMemo(() => {
+    if (!analysisRun) return []
     const rank = { high: 0, med: 1, low: 2 } as const
-    return [...run.recommendations].sort((a, b) => rank[a.priority] - rank[b.priority])
-  }, [run])
+    return [...analysisRun.recommendations].sort((a, b) => rank[a.priority] - rank[b.priority])
+  }, [analysisRun])
 
   return (
     <div className="min-h-screen bg-[#0B1220] text-white">
@@ -138,41 +138,41 @@ export default function Results() {
         <div className="space-y-4">
           <Card className="p-4">
             <div className="flex items-center justify-between">
-              <ScoreRing score={run?.overallScore || 0} />
-              <ResultsTabs tab={tab} onTab={setTab} />
+              <ScoreRing score={analysisRun?.overallScore || 0} />
+              <ResultsTabs activeTab={activeTab} onTabChange={setActiveTab} />
             </div>
-            {loading ? <div className="mt-3"><Spinner label="Loading" /></div> : null}
-            {error ? <div className="mt-3 text-sm text-rose-300">{error}</div> : null}
+            {isLoading ? <div className="mt-3"><Spinner label="Loading" /></div> : null}
+            {errorMessage ? <div className="mt-3 text-sm text-rose-300">{errorMessage}</div> : null}
           </Card>
 
-          {tab === 'overview' ? <OverviewCard recommendations={recs} /> : null}
-          {tab === 'breakdown' && run ? <BreakdownCard metrics={run.metrics} /> : null}
-          {tab === 'diff' ? (
+          {activeTab === 'overview' ? <OverviewCard recommendations={sortedRecommendations} /> : null}
+          {activeTab === 'breakdown' && analysisRun ? <BreakdownCard metrics={analysisRun.metrics} /> : null}
+          {activeTab === 'diff' ? (
             <DiffCard
-              compareId={compareId}
-              onCompareId={setCompareId}
+              compareRunId={compareRunId}
+              onCompareRunIdChange={setCompareRunId}
               compareOptions={compareOptions}
-              loading={loading}
-              diff={diff}
-              onCompute={() => void loadDiff()}
+              isLoading={isLoading}
+              diffResult={diffResult}
+              onComputeDiff={() => void loadDiff()}
             />
           ) : null}
-          {tab === 'ab' ? (
+          {activeTab === 'ab' ? (
             <AbTestCard
               experimentName={experimentName}
-              onExperimentName={setExperimentName}
-              compareId={compareId}
-              onCompareId={setCompareId}
+              onExperimentNameChange={setExperimentName}
+              compareRunId={compareRunId}
+              onCompareRunIdChange={setCompareRunId}
               compareOptions={compareOptions}
-              loading={loading}
-              abResult={abResult}
-              onRun={() => void runAb()}
+              isLoading={isLoading}
+              abTestResult={abTestResult}
+              onRunExperiment={() => void runAbTest()}
             />
           ) : null}
         </div>
 
         <div className="space-y-4">
-          <RecommendationsCard recommendations={recs} />
+          <RecommendationsCard recommendations={sortedRecommendations} />
         </div>
       </div>
     </div>
