@@ -52,54 +52,84 @@ router.get('/runs/:id', requireAuth, async (req: Request, res: Response) => {
 })
 
 router.post('/run', requireAuth, async (req: Request, res: Response) => {
-  const parsed = runSchema.safeParse(req.body)
-  if (!parsed.success) {
-    res.status(400).json({ success: false, error: 'Invalid input' })
-    return
+  try {
+    const parsed = runSchema.safeParse(req.body)
+    if (!parsed.success) {
+      res.status(400).json({ success: false, error: 'Invalid input' })
+      return
+    }
+
+    const resume = await Resume.findOne({ _id: parsed.data.resumeId, userId: req.userId })
+    if (!resume) {
+      res.status(404).json({ success: false, error: 'Resume not found' })
+      return
+    }
+
+    const jd = await JobDescription.findOne({ _id: parsed.data.jobDescriptionId, userId: req.userId }).lean()
+    if (!jd) {
+      res.status(404).json({ success: false, error: 'Job description not found' })
+      return
+    }
+
+    let resumeText = resume.extractedText
+    if (!resumeText) {
+      try {
+        console.log(`Extracting text from ${resume.fileType} file: ${resume.filePath}`)
+        const extracted =
+          resume.fileType === 'pdf'
+            ? await extractTextFromPdf(resume.filePath)
+            : await extractTextFromDocx(resume.filePath)
+        resumeText = extracted.text
+        console.log(`Extracted text length: ${resumeText.length} characters`)
+        resume.extractedText = resumeText
+        resume.extractedAt = new Date()
+        await resume.save()
+      } catch (extractionError) {
+        console.error('Text extraction failed for file:', resume.filePath)
+        console.error('Error details:', extractionError)
+        res.status(500).json({ 
+          success: false, 
+          error: `Failed to extract text from ${resume.fileType.toUpperCase()} file. ${
+            extractionError instanceof Error ? extractionError.message : 'Unknown error'
+          }` 
+        })
+        return
+      }
+    }
+
+    if (!resumeText || resumeText.trim().length === 0) {
+      res.status(400).json({ 
+        success: false, 
+        error: 'Resume text is empty. Please upload a resume with readable content.' 
+      })
+      return
+    }
+
+    const scored = scoreResume({
+      resumeText,
+      jobDescriptionText: jd.contentPlain || '',
+      jobTitle: jd.title || '',
+    })
+
+    const run = await AnalysisRun.create({
+      userId: req.userId,
+      resumeId: resume._id.toString(),
+      jobDescriptionId: jd._id.toString(),
+      overallScore: scored.overallScore,
+      metrics: scored.metrics,
+      recommendations: scored.recommendations,
+      resumeTextSnapshot: resumeText,
+      jdTextSnapshot: jd.contentPlain || '',
+    })
+
+    res.json({ success: true, runId: run._id.toString() })
+  } catch (error) {
+    console.error('Analysis run failed:', error)
+    res.status(500).json({ 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Failed to run analysis. Please try again.' 
+    })
   }
-
-  const resume = await Resume.findOne({ _id: parsed.data.resumeId, userId: req.userId })
-  if (!resume) {
-    res.status(404).json({ success: false, error: 'Resume not found' })
-    return
-  }
-
-  const jd = await JobDescription.findOne({ _id: parsed.data.jobDescriptionId, userId: req.userId }).lean()
-  if (!jd) {
-    res.status(404).json({ success: false, error: 'Job description not found' })
-    return
-  }
-
-  let resumeText = resume.extractedText
-  if (!resumeText) {
-    const extracted =
-      resume.fileType === 'pdf'
-        ? await extractTextFromPdf(resume.filePath)
-        : await extractTextFromDocx(resume.filePath)
-    resumeText = extracted.text
-    resume.extractedText = resumeText
-    resume.extractedAt = new Date()
-    await resume.save()
-  }
-
-  const scored = scoreResume({
-    resumeText,
-    jobDescriptionText: jd.contentPlain,
-    jobTitle: jd.title,
-  })
-
-  const run = await AnalysisRun.create({
-    userId: req.userId,
-    resumeId: resume._id.toString(),
-    jobDescriptionId: jd._id.toString(),
-    overallScore: scored.overallScore,
-    metrics: scored.metrics,
-    recommendations: scored.recommendations,
-    resumeTextSnapshot: resumeText,
-    jdTextSnapshot: jd.contentPlain,
-  })
-
-  res.json({ success: true, runId: run._id.toString() })
 })
 
 export default router

@@ -35,6 +35,7 @@ const MESSAGES = {
   // Job description operations
   JOB_DESCRIPTION_CREATED: 'Job description created successfully.',
   JOB_DESCRIPTION_SAVED: 'Job description saved.',
+  JOB_DESCRIPTION_DELETED: 'Job description deleted successfully.',
   JOB_DESCRIPTION_FAILURE: 'Failed to save job description. Please try again.',
 } as const
 
@@ -204,6 +205,16 @@ export const toastService = {
     })
   },
   
+  /**
+   * Display success toast for job description deletion
+   */
+  jobDescriptionDeleted: () => {
+    toast.success(MESSAGES.JOB_DESCRIPTION_DELETED, {
+      duration: DURATIONS.SUCCESS,
+      id: 'jd-deleted',
+    })
+  },
+  
   // ─────────────────────────────────────────────────────────────────────────
   // Generic Notifications
   // ─────────────────────────────────────────────────────────────────────────
@@ -294,5 +305,6 @@ export const {
   analysisFailure,
   jobDescriptionCreated,
   jobDescriptionSaved,
+  jobDescriptionDeleted,
   jobDescriptionFailure,
 } = toastService

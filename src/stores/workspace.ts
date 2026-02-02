@@ -51,6 +51,7 @@ type WorkspaceState = {
   loadJobDescription: (id: string) => Promise<JobDescription>
   createJobDescription: (payload: { title: string; contentRich: string; contentPlain: string }) => Promise<string>
   updateJobDescription: (id: string, payload: { title: string; contentRich: string; contentPlain: string }) => Promise<void>
+  deleteJobDescription: (id: string) => Promise<void>
   runAnalysis: (resumeId: string, jobDescriptionId: string) => Promise<string>
   setActiveResumeId: (id: string | null) => void
   setActiveJobDescriptionId: (id: string | null) => void
@@ -86,8 +87,12 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
     const fd = new FormData()
     fd.append('file', file)
     try {
-      await apiUpload<{ success: true }>('/api/resumes/upload', fd)
+      const response = await apiUpload<{ success: true; resume: { id: string } }>('/api/resumes/upload', fd)
       await get().refreshAll()
+      // Auto-select the uploaded resume
+      if (response.resume?.id) {
+        set({ activeResumeId: response.resume.id })
+      }
       toastService.resumeUploadSuccess(file.name)
     } catch (e: unknown) {
       const errorMessage = getErrorMessage(e, 'Failed to upload resume')
@@ -126,10 +131,30 @@ export const useWorkspaceStore = create<WorkspaceState>((set, get) => ({
   },
   updateJobDescription: async (id, payload) => {
     try {
+      // Optimistically update
+      set((state) => ({
+        jobDescriptions: state.jobDescriptions.map((jd) =>
+          jd.id === id ? { ...jd, ...payload, updatedAt: new Date().toISOString() } : jd,
+        ),
+      }))
       await apiPut<{ success: true }>(`/api/job-descriptions/${id}`, payload)
-      await get().refreshAll()
+      // Don't refresh all to avoid feedback loop
     } catch (e: unknown) {
       const errorMessage = getErrorMessage(e, 'Failed to save job description')
+      toastService.jobDescriptionFailure(errorMessage)
+      // Revert optimization on error could be added here, but for now just throw
+      throw e
+    }
+  },
+  deleteJobDescription: async (id) => {
+    try {
+      await apiDelete<{ success: true }>(`/api/job-descriptions/${id}`)
+      const state = get()
+      if (state.activeJobDescriptionId === id) set({ activeJobDescriptionId: null })
+      await get().refreshAll()
+      toastService.jobDescriptionDeleted()
+    } catch (e: unknown) {
+      const errorMessage = getErrorMessage(e, 'Failed to delete job description')
       toastService.jobDescriptionFailure(errorMessage)
       throw e
     }

@@ -118,5 +118,19 @@ router.put('/:id', requireAuth, async (req: Request, res: Response) => {
   res.json({ success: true, jobDescription: { id: updated._id.toString() } })
 })
 
+router.delete('/:id', requireAuth, async (req: Request, res: Response) => {
+  const deleted = await JobDescription.findOneAndDelete({
+    _id: req.params.id,
+    userId: req.userId,
+  })
+
+  if (!deleted) {
+    res.status(404).json({ success: false, error: 'Not found' })
+    return
+  }
+
+  res.json({ success: true })
+})
+
 export default router
 
